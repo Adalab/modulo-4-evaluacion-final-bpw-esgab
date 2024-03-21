@@ -1,0 +1,25 @@
+{
+  "name": "modulo-4-evaluacion-final-bpw-esgab",
+  "version": "1.0.0",
+  "description": "Evaluación final del módulo 4",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adalab/modulo-4-evaluacion-final-bpw-esgab.git"
+  },
+  "keywords": [
+    "recetas"
+  ],
+  "author": "Esther García",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Adalab/modulo-4-evaluacion-final-bpw-esgab/issues"
+  },
+  "homepage": "https://github.com/Adalab/modulo-4-evaluacion-final-bpw-esgab#readme",
+  "dependencies": {
+    "express": "^4.19.1"
+  }
+}
