@@ -34,7 +34,7 @@ server.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
 
-server.get('/recetas', async (req, res) => {
+server.get('/api/recetas', async (req, res) => {
 
   const connection = await getConnection();
 
@@ -48,6 +48,35 @@ server.get('/recetas', async (req, res) => {
     'info': { 'count' : numOfElements },
     'results': results
   });
+
+  connection.end();
+
+});
+
+server.get('/api/recetas/:id', async (req, res) => {
+
+  const recipeId = req.params.id;
+
+  const foundRecipe = 'SELECT * FROM recetas WHERE id = ?';
+
+  const connection = await getConnection();
+
+  const [results] = await connection.query(foundRecipe, [recipeId]);
+
+  const recipesResults = results[0];
+
+  if (results.length === 0) {
+  
+    res.json({
+      success: false,
+      error: "No se ha encontrado esta receta",
+    });
+  
+  } else {
+
+    res.json(recipesResults);
+
+  }
 
   connection.end();
 
