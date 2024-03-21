@@ -1,6 +1,7 @@
-CREATE TABLE `recetas_db`.`recetas` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `nombre` VARCHAR(45) NOT NULL,
-  `ingredientes` VARCHAR(2500) NOT NULL,
-  `instrucciones` LONGTEXT NOT NULL,
-  PRIMARY KEY (`id`));
+INSERT INTO recetas (nombre, ingredientes, instrucciones) VALUES
+  ('Crespells', 
+   '100g de azúcar, 100g de manteca de cerdo, 275g de harina de trigo de todo uso, 35g de aceite de oliva virgen extra, 35 ml de zumo de naranja, 2 yemas de huevo, la ralladura de un limón, azúcar glass para decorar (opcional)', 
+   'Mezclar el aceite de oliva con la manteca con las manos, deshaciendo esta última hasta conseguir una mezcla cremosa. Añadimos el resto de los ingredientes menos la harina y volvemos a mezclar hasta que obtengamos una masa homogénea. Añadimos la harina y amasamos bien hasta que nos quede una mezcla uniforme. Formamos una bola, la envolvemos con papel film y la dejamos reposar media hora guardada en la nevera. Pasado este tiempo, la estiramos con un rodillo, dejando la masa con un grosor considerable, y con los cortadores de crespells (que tienen forma de flor, estrella o corazón) formamos las pastas. Las cocemos a horno precalentado a 180º durante unos 20 minutos o hasta que estén doradas.'),
+  ('Empanadas mallorquinas ',
+   'PARA LA MASA - 1kg de harina, 225g de manteca de cerdo, 100ml de aceite de oliva virgen extra, 200ml de leche, 200ml de agua, 1 yema de huevo. PARA EL RELLENO - 500g de pierna de cordero deshuesada y troceada, 150g de guisantes, 1 pizca de sal, 1 pizca de pimienta, 1 pizca de pimentón dulce, 1 chorrito de aceite de oliva virgen extra, 8 trozos al gusto de tocino ibérico, 8 trozos al gusto de sobrasada', 
+   'Macerar la carne y los guisantes salpimentados con pimentón y aceite. Preparar la masa con la manteca de cerdo, el aceite, el agua, la leche y la yema de huevo junto con la harina y amasar hasta conseguir una masa lisa no pegajosa. Formar las bases dando forma de cesta a porciones de masa. Rellenar con la carne y los guisantes macerados. Añadir el tocino ibérico y la sobrasada. Formar las tapas de las empanadas con la masa. Sellar la empanadas y pincharlas para que pueda salir el vapor. Hornear las panades durante 50 minutos a 170 ºC. Retirar del horno y disfrutar de las auténticas empanadas de cordero mallorquinas');
