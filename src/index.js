@@ -42,9 +42,11 @@ server.get('/recetas', async (req, res) => {
 
   const [results] = await connection.query(sql);
 
+  const numOfElements = results.length;
+
   res.json({
-    success: true,
-    recetas: results,
+    'info': { 'count' : numOfElements },
+    'results': results
   });
 
   connection.end();
