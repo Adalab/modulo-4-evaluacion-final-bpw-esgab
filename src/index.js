@@ -80,10 +80,11 @@ server.get("/api/recetas/:id", async (req, res) => {
 server.post("/api/recetas", async (req, res) => {
   const { nombre, ingredientes, instrucciones } = req.body;
 
-  if (!nombre || !ingredientes || !instrucciones || nombre === "" || ingredientes === "" || instrucciones === "") {
+  if ( !nombre || !ingredientes || !instrucciones || nombre === "" || ingredientes === "" || instrucciones === ""
+  ) {
     return res.json({
       success: false,
-      error: `Los campos no pueden estar vacíos`,
+      error: "Los campos no pueden estar vacíos",
     });
   }
 
@@ -107,12 +108,68 @@ server.post("/api/recetas", async (req, res) => {
       success: true,
       id: results.insertId,
     });
+  
   } catch (error) {
-    // Handle any potential errors
-    console.error("Error al insertar la receta:", error);
-    return res.status(500).json({
+    res.json({
       success: false,
       error: "Error al insertar la receta",
+    });
+  }
+});
+
+server.put("/api/recetas/:id", async (req, res) => {
+  const { nombre, ingredientes, instrucciones } = req.body;
+
+  try {
+    const conn = await getConnection();
+
+    const updateRecipe = `
+      UPDATE recetas
+        SET nombre = ?, ingredientes = ?, instrucciones = ?
+        WHERE id = ?
+    `;
+
+    const [updateResult] = await conn.execute(updateRecipe, [
+      nombre,
+      ingredientes,
+      instrucciones,
+      req.params.id,
+    ]);
+
+    conn.end();
+
+    res.json({
+      success: true,
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      error: "Error al actualizar la receta",
+    });
+  }
+});
+
+server.delete("/api/recetas/:id", async (req, res) => {
+  const deletedId = req.params.id;
+
+  try {
+    const conn = await getConnection();
+
+    const deleteRecipe = `
+      DELETE FROM recetas WHERE id = ?
+    `;
+
+    const [deleteResult] = await conn.execute(deleteRecipe, [deletedId]);
+
+    conn.end();
+
+    res.json({
+      success: true,
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      error: "Error al borrar la receta",
     });
   }
 });
