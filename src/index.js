@@ -1,5 +1,3 @@
-// my Express server
-
 // import libraries
 const express = require("express");
 const cors = require("cors");
@@ -18,10 +16,7 @@ const server = express();
 server.use(cors());
 server.use(express.json({ limit: "25mb" }));
 
-server.use( swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
-// Swagger documentation
-
+server.use( "/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // mysql config
 
@@ -81,61 +76,77 @@ server.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
 
+// access to Swagger documentation at root
+server.get("/", (req, res) => {
+  res.redirect("/api-docs");
+});
+
 // get all recipes
 server.get("/api/recetas", async (req, res) => {
-  const conn = await getConnection(process.env.MYSQL_DB1);
+  
+  try {
+    const conn = await getConnection(process.env.MYSQL_DB1);
 
-  const sql = "SELECT * FROM recetas";
+    const sql = "SELECT * FROM recetas";
 
-  const [results] = await conn.query(sql);
+    const [results] = await conn.query(sql);
 
-  const numOfElements = results.length;
+    const numOfElements = results.length;
 
-  res.json({
-    info: { count: numOfElements },
-    results: results,
-  });
+    res.status(200).json({
+      info: { count: numOfElements },
+      results: results,
+    });
 
-  conn.end();
+    conn.end();
+
+  } catch (error) {
+    res.status(500).json({
+      error: "Error interno del servidor",
+    });
+  }
 });
 
 // get recipe by its id
 server.get("/api/recetas/:id", async (req, res) => {
-  const recipeId = req.params.id;
+  try {
+    const recipeId = req.params.id;
 
-  const foundRecipe = "SELECT * FROM recetas WHERE id = ?";
+    const foundRecipe = "SELECT * FROM recetas WHERE id = ?";
+  
+    const conn = await getConnection(process.env.MYSQL_DB1);
+  
+    const [results] = await conn.query(foundRecipe, [recipeId]);
+  
+    const recipesResults = results[0];
+  
+    if (results.length === 0) {
+      res.status(404).json({
+        success: false,
+        error: "No se ha encontrado la receta",
+      });
 
-  const conn = await getConnection(process.env.MYSQL_DB1);
+    } else {
+      res.status(200).json(recipesResults);
+    }
+  
+    conn.end();
 
-  const [results] = await conn.query(foundRecipe, [recipeId]);
-
-  const recipesResults = results[0];
-
-  if (results.length === 0) {
-    res.json({
-      success: false,
-      error: "No se ha encontrado esta receta",
+  } catch (error) {
+    res.status(500).json({
+      error: "Error interno del servidor",
     });
-  } else {
-    res.json(recipesResults);
   }
 
-  conn.end();
 });
 
 // add recipe
 server.post("/api/recetas", async (req, res) => {
+  console.log(req.body);
   const { nombre, ingredientes, instrucciones } = req.body;
 
-  if (
-    !nombre ||
-    !ingredientes ||
-    !instrucciones ||
-    nombre === "" ||
-    ingredientes === "" ||
-    instrucciones === ""
-  ) {
-    return res.json({
+  if (!nombre || !ingredientes || !instrucciones || nombre === "" || ingredientes === "" || instrucciones === "") {
+    return res.status(400).json({
       success: false,
       error: "Los campos no pueden estar vacíos",
     });
@@ -155,16 +166,17 @@ server.post("/api/recetas", async (req, res) => {
       instrucciones,
     ]);
 
-    connection.end();
+    conn.end();
 
-    res.json({
+    res.status(201).json({
       success: true,
       id: results.insertId,
     });
+
   } catch (error) {
-    res.json({
+    res.status(500).json({
       success: false,
-      error: "Error al insertar la receta",
+      error: "Error interno del servidor al insertar la receta",
     });
   }
 });
@@ -190,13 +202,14 @@ server.put("/api/recetas/:id", async (req, res) => {
 
     conn.end();
 
-    res.json({
+    res.status(200).json({
       success: true,
     });
+
   } catch (error) {
-    res.json({
+    res.status(500).json({
       success: false,
-      error: "Error al actualizar la receta",
+      error: "Error interno del servidor al actualizar la receta",
     });
   }
 });
@@ -215,13 +228,14 @@ server.delete("/api/recetas/:id", async (req, res) => {
 
     conn.end();
 
-    res.json({
+    res.status(200).json({
       success: true,
     });
+    
   } catch (error) {
-    res.json({
+    res.status(500).json({
       success: false,
-      error: "Error al borrar la receta",
+      error: "Error interno del servidor al borrar la receta",
     });
   }
 });
@@ -232,7 +246,7 @@ server.post("/registro", async (req, res) => {
   console.log(req.body);
 
   if (!nombre) {
-    res.json({
+    res.status(400).json({
       success: false,
       error: "El nombre de usuaria no puede estar vacio",
     });
@@ -240,7 +254,7 @@ server.post("/registro", async (req, res) => {
   }
 
   if (nombre.length < 4) {
-    res.json({
+    res.status(400).json({
       success: false,
       error: "El nombre de usuaria es demasiado corto",
     });
@@ -248,7 +262,7 @@ server.post("/registro", async (req, res) => {
   }
 
   if (nombre.includes(" ")) {
-    res.json({
+    res.status(400).json({
       success: false,
       error: "El nombre de usuaria no puede contener espacios",
     });
@@ -256,7 +270,7 @@ server.post("/registro", async (req, res) => {
   }
 
   if (!email) {
-    res.json({
+    res.status(400).json({
       success: false,
       error: "El email de la usuaria no puede estar vacio",
     });
@@ -264,7 +278,7 @@ server.post("/registro", async (req, res) => {
   }
 
   if (!/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(email)) {
-    res.json({
+    res.status(400).json({
       success: false,
       error: "El email no es válido",
     });
@@ -272,7 +286,7 @@ server.post("/registro", async (req, res) => {
   }
 
   if (!password) {
-    res.json({
+    res.status(400).json({
       success: false,
       error: "La contraseña no puede estar vacia",
     });
@@ -280,7 +294,7 @@ server.post("/registro", async (req, res) => {
   }
 
   if (password.length < 8) {
-    res.json({
+    res.status(400).json({
       success: false,
       error: "La contraseña debe tener como mínimo 8 caracteres",
     });
@@ -293,7 +307,7 @@ server.post("/registro", async (req, res) => {
       password
     )
   ) {
-    return res.json({
+    return res.status(400).json({
       success: false,
       error:
         "La contraseña debe contener al menos una letra, un número y un símbolo",
@@ -311,7 +325,7 @@ server.post("/registro", async (req, res) => {
   const [existingUserNames] = await conn.query(queryCheckUserName, [nombre]);
 
   if (existingUserNames.length > 0) {
-    res.json({
+    res.status(400).json({
       success: false,
       error: "Ese nombre de usuario ya existe",
     });
@@ -329,7 +343,7 @@ server.post("/registro", async (req, res) => {
 
   if (existingEmails.length > 0) {
     // If a user with the given email exists, return an error
-    res.json({
+    res.status(400).json({
       success: false,
       error: "La dirección de correo electrónico ya está registrada",
     });
@@ -354,13 +368,13 @@ server.post("/registro", async (req, res) => {
     // Generate a token for the user
     const token = generateToken({ email });
 
-    res.json({
+    res.status(201).json({
       success: true,
       token: token,
     });
 
   } else {
-    res.json({ 
+    res.status(500).json({ 
       success: false,
       error: "Error en el registro de usuario"
     });
