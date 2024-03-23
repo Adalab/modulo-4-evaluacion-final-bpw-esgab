@@ -7,6 +7,9 @@ const mysql = require("mysql2/promise");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const swaggerUi = require('swagger-ui-express'),
+  swaggerDocument = require('../swagger.json');
+
 require("dotenv").config();
 
 // create and config server
@@ -14,6 +17,11 @@ const server = express();
 
 server.use(cors());
 server.use(express.json({ limit: "25mb" }));
+
+server.use( swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// Swagger documentation
+
 
 // mysql config
 

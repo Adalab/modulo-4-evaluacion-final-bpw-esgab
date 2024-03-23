@@ -1,0 +1,194 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Recetas y Usuarias API",
+    "version": "1.0.0",
+    "description": "Una API para la gestión de recetas y usuarios. Permite a los usuarios registrarse, iniciar sesión, ver, añadir y eliminar recetas."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000",
+      "description": "Servidor de desarrollo"
+    },
+    {
+      "url": "http://adalab.es",
+      "description": "Servidor de producción"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Recetas",
+      "description": "Endpoints aplicación recetas"
+    },
+    {
+      "name": "Usuarias"
+    }
+  ],
+  "produces": ["application/json"],
+  "paths": {
+    "/api/recetas": {
+      "get": {
+        "tags": ["Recetas"],
+        "summary": "Lista todas las recetas",
+        "responses": {
+          "200": {
+            "description": "Listado de todas las recetas"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Recetas"],
+        "summary": "Crea una nueva receta",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/recetas"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Receta creada exitosamente"
+          },
+          "404": {
+            "description": "No se ha podido crear esta receta"
+          }
+        }
+      }
+    },
+    "/api/recetas/{id}": {
+      "get": {
+        "tags": ["Recetas"],
+        "summary": "Obtiene detalles de una receta específica",
+        "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "Muestra una receta por su ID",
+              "required": true,
+              "type": "string",
+              "schema": {
+                "type": "integer"
+              }
+            }
+        ],
+        "responses": {
+          "404": {
+            "description": "No se ha encontrado esta receta"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Recetas"],
+        "summary": "Actualiza una receta específica",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Filtra las recetas por su ID",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Receta actualizada"
+          },
+          "404": {
+            "description": "No se ha podido actualizar esta receta"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Recetas"],
+        "summary": "Elimina una receta específica",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Elimina una receta por su ID",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Se ha podido eliminar esta receta"
+          },
+          "404": {
+            "description": "No se ha podido eliminar esta receta"
+          }
+        }
+      }
+    },
+    "/registro": {
+      "post": {
+        "tags": ["Usuarias"],
+        "description": "Registra una usuaria",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Se ha registrado la usuaria con éxito"
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": ["Usuarias"],
+        "description": "Permite que una usuaria inicie sesión",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Inicio de sesión exitoso"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "recetas": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "El identificador único de la receta en la base de datos."
+          },
+          "nombre": {
+            "type": "string",
+            "description": "El nombre de la receta."
+          },
+          "ingredientes": {
+            "type": "string",
+            "description": "Una lista de ingredientes necesarios para la receta."
+          },
+          "instrucciones": {
+            "type": "string",
+            "description": "Las instrucciones paso a paso para preparar la receta."
+          }
+        }
+      },
+      "usuarios_db": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slogan": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
