@@ -1,37 +1,61 @@
-// import libraries
+// Express server
+
+// IMPORT LIBRARIES
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const swaggerUi = require('swagger-ui-express'),
-  swaggerDocument = require('../swagger.json');
+const swaggerUi = require("swagger-ui-express"),
+  swaggerDocument = require("../swagger.json");
 
 require("dotenv").config();
 
-// create and config server
+// CREATE VARIABLES
 const server = express();
+const port = process.env.PORT || 4000;
 
+// CONFIGURATION
 server.use(cors());
 server.use(express.json({ limit: "25mb" }));
+server.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-server.use( "/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// MYSQL CONFIGURATION
 
-// mysql config
+async function getConnection() {
 
-async function getConnection(database) {
+  let host, user, password, database;
+
+  if (process.env.NODE_ENV === "production") {
+    host = process.env.MYSQL_HOST;
+    user = process.env.MYSQL_USER;
+    password = process.env.MYSQL_PASS;
+    database = process.env.MYSQL_DB;
+  } else {
+    host = "localhost";
+    user = "root";
+    password = process.env.MYSQL_LOCAL_PASS;
+    database = process.env.MYSQL_LOCAL_DB;
+  }
+
   const connection = await mysql.createConnection({
-    host: process.env.MYSQL_HOST,
+    host: host,
     database: database,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASS,
+    user: user,
+    password: password,
   });
 
   await connection.connect();
 
   return connection;
 }
+
+// ARRANCAR EL SERVIDOR
+
+server.listen(port, () => {
+  console.log(`Server listening at http://localhost:${port}`);
+});
 
 // JWT functions
 
@@ -70,12 +94,6 @@ const authenticateToken = (req, res, next) => {
   next();
 };
 
-// init express aplication
-const port = 4000;
-server.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
-});
-
 // access to Swagger documentation at root
 server.get("/", (req, res) => {
   res.redirect("/api-docs");
@@ -83,9 +101,8 @@ server.get("/", (req, res) => {
 
 // get all recipes
 server.get("/api/recetas", async (req, res) => {
-  
   try {
-    const conn = await getConnection(process.env.MYSQL_DB1);
+    const conn = await getConnection();
 
     const sql = "SELECT * FROM recetas";
 
@@ -99,7 +116,6 @@ server.get("/api/recetas", async (req, res) => {
     });
 
     conn.end();
-
   } catch (error) {
     res.status(500).json({
       error: "Error interno del servidor",
@@ -113,31 +129,28 @@ server.get("/api/recetas/:id", async (req, res) => {
     const recipeId = req.params.id;
 
     const foundRecipe = "SELECT * FROM recetas WHERE id = ?";
-  
-    const conn = await getConnection(process.env.MYSQL_DB1);
-  
+
+    const conn = await getConnection();
+
     const [results] = await conn.query(foundRecipe, [recipeId]);
-  
+
     const recipesResults = results[0];
-  
+
     if (results.length === 0) {
       res.status(404).json({
         success: false,
         error: "No se ha encontrado la receta",
       });
-
     } else {
       res.status(200).json(recipesResults);
     }
-  
-    conn.end();
 
+    conn.end();
   } catch (error) {
     res.status(500).json({
       error: "Error interno del servidor",
     });
   }
-
 });
 
 // add recipe
@@ -145,7 +158,14 @@ server.post("/api/recetas", async (req, res) => {
   console.log(req.body);
   const { nombre, ingredientes, instrucciones } = req.body;
 
-  if (!nombre || !ingredientes || !instrucciones || nombre === "" || ingredientes === "" || instrucciones === "") {
+  if (
+    !nombre ||
+    !ingredientes ||
+    !instrucciones ||
+    nombre === "" ||
+    ingredientes === "" ||
+    instrucciones === ""
+  ) {
     return res.status(400).json({
       success: false,
       error: "Los campos no pueden estar vacíos",
@@ -153,7 +173,7 @@ server.post("/api/recetas", async (req, res) => {
   }
 
   try {
-    const conn = await getConnection(process.env.MYSQL_DB1);
+    const conn = await getConnection();
 
     // insert recipe data
     const insertRecipes = `
@@ -172,7 +192,6 @@ server.post("/api/recetas", async (req, res) => {
       success: true,
       id: results.insertId,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -185,7 +204,7 @@ server.put("/api/recetas/:id", async (req, res) => {
   const { nombre, ingredientes, instrucciones } = req.body;
 
   try {
-    const conn = await getConnection(process.env.MYSQL_DB1);
+    const conn = await getConnection();
 
     const updateRecipe = `
       UPDATE recetas
@@ -205,7 +224,6 @@ server.put("/api/recetas/:id", async (req, res) => {
     res.status(200).json({
       success: true,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -218,7 +236,7 @@ server.delete("/api/recetas/:id", async (req, res) => {
   const deletedId = req.params.id;
 
   try {
-    const conn = await getConnection(process.env.MYSQL_DB1);
+    const conn = await getConnection();
 
     const deleteRecipe = `
       DELETE FROM recetas WHERE id = ?
@@ -231,7 +249,6 @@ server.delete("/api/recetas/:id", async (req, res) => {
     res.status(200).json({
       success: true,
     });
-    
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -314,7 +331,7 @@ server.post("/registro", async (req, res) => {
     });
   }
 
-  const conn = await getConnection(process.env.MYSQL_DB2);
+  const conn = await getConnection();
 
   const queryCheckUserName = `
   SELECT *
@@ -372,14 +389,12 @@ server.post("/registro", async (req, res) => {
       success: true,
       token: token,
     });
-
   } else {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: "Error en el registro de usuario"
+      error: "Error en el registro de usuario",
     });
   }
 
   conn.end();
-
 });
