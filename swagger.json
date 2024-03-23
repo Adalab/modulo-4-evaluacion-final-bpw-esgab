@@ -9,10 +9,6 @@
     {
       "url": "http://localhost:4000",
       "description": "Servidor de desarrollo"
-    },
-    {
-      "url": "https://modulo-4-evaluacion-final-bpw-esgab.onrender.com",
-      "description": "Servidor de producción"
     }
   ],
   "tags": [

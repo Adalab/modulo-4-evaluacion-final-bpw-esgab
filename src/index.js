@@ -22,12 +22,6 @@ server.use(express.json({ limit: "25mb" }));
 server.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // MYSQL CONFIGURATION
-// CONFIGURATION
-server.use(cors());
-server.use(express.json({ limit: "25mb" }));
-server.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
-// MYSQL CONFIGURATION
 async function getConnection(database) {
   let host, user, password;
 
@@ -47,7 +41,7 @@ async function getConnection(database) {
   return connection;
 }
 
-// START THE SERVER
+// START SERVER
 server.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
@@ -88,12 +82,12 @@ const authenticateToken = (req, res, next) => {
   next();
 };
 
-// access to Swagger documentation at root
+// Access to Swagger documentation at root
 server.get("/", (req, res) => {
   res.redirect("/api-docs");
 });
 
-// get all recipes
+// Get all recipes
 server.get("/api/recetas", authenticateToken, async (req, res) => {
   try {
     const conn = await getConnection(process.env.MYSQL_RECIPES_DB);
@@ -117,7 +111,7 @@ server.get("/api/recetas", authenticateToken, async (req, res) => {
   }
 });
 
-// get recipe by its id
+// Get recipe by its id
 server.get("/api/recetas/:id", async (req, res) => {
   try {
     const recipeId = req.params.id;
@@ -147,7 +141,7 @@ server.get("/api/recetas/:id", async (req, res) => {
   }
 });
 
-// add recipe
+// Add recipe
 server.post("/api/recetas", async (req, res) => {
   console.log(req.body);
   const { nombre, ingredientes, instrucciones } = req.body;
@@ -169,7 +163,7 @@ server.post("/api/recetas", async (req, res) => {
   try {
     const conn = await getConnection(process.env.MYSQL_RECIPES_DB);
 
-    // insert recipe data
+    // Insert recipe data
     const insertRecipes = `
       INSERT INTO recetas (nombre, ingredientes, instrucciones)
       VALUES (?, ?, ?)`;
@@ -254,7 +248,6 @@ server.delete("/api/recetas/:id", async (req, res) => {
 // User registration: username, email and password
 server.post("/registro", async (req, res) => {
   const { nombre, email, password } = req.body;
-  console.log(req.body);
 
   if (!nombre) {
     res.status(400).json({
@@ -312,7 +305,7 @@ server.post("/registro", async (req, res) => {
     return;
   }
 
-  //  Check if the password contains at least one letter, one number, and one symbol
+  // Check if the password contains at least one letter, one number, and one symbol
   if (
     !/(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+|}{:;.,<>?]).{8,}/.test(
       password
@@ -444,7 +437,7 @@ server.post('/login', async (req, res) => {
 
   const token = generateToken({ email });
 
-  res.json({
+  res.status(201).json({
     success: true, 
     token: token, 
   });
