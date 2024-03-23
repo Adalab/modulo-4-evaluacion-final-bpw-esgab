@@ -8,6 +8,9 @@ Este proyecto consiste en la creación de una API RESTful utilizando Express.js 
 4. **PUT /api/recetas/:id**: Actualizar una receta por su ID.
 5. **DELETE /api/recetas/:id**: Eliminar una receta por su ID.
 6. **POST /registro**: Registro de usuarios.
+7. **POST /login**: Inicio sesión de usuarios.
+
+La información relacionada con las recetas y los usuarios se almacena en bases de datos MySQL. 
 
 ## Guía de inicio rápido 🚀
 
@@ -33,12 +36,14 @@ npm install
 3. Crea un archivo **.env** en el directorio raíz y define las siguientes **variables de entorno**:
 
 ```bash
-MYSQL_HOST = tu_host_mysql
-MYSQL_USER = tu_usuario_mysql
-MYSQL_PASS = tu_contraseña_mysql
-MYSQL_RECIPES_DB = nombre_de_tu_base_de_datos_de_recetas
-MYSQL_USERS_DB = nombre_de_tu_base_de_datos_de_usuarios
+MYSQL_HOST = "tu_host_mysql"
+MYSQL_USER = "tu_usuario_mysql"
+MYSQL_PASS = "tu_contraseña_mysql"
+MYSQL_RECIPES_DB = "nombre_de_tu_base_de_datos_de_recetas"
+MYSQL_USERS_DB = "nombre_de_tu_base_de_datos_de_usuarios"
+JWT_SECRET = "secreto_para_generar_tokens"
 ```
+
 4. **Inicia el servidor**:
 
 ```bash

@@ -48,13 +48,13 @@ server.listen(port, () => {
 
 // JWT functions
 const generateToken = (payload) => {
-  const token = jwt.sign(payload, "secreto", { expiresIn: "1h" });
+  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
   return token;
 };
 
 const verifyToken = (token) => {
   try {
-    const decoded = jwt.verify(token, "secreto");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     return decoded;
   } catch (err) {
     return null;
@@ -88,7 +88,7 @@ server.get("/", (req, res) => {
 });
 
 // Get all recipes
-server.get("/api/recetas", authenticateToken, async (req, res) => {
+server.get("/api/recetas", async (req, res) => {
   try {
     const conn = await getConnection(process.env.MYSQL_RECIPES_DB);
 
@@ -369,6 +369,7 @@ server.post("/registro", async (req, res) => {
   ]);
 
   if (insertResults.affectedRows === 1) {
+    
     // Generate a token for the user
     const token = generateToken({ email });
 
@@ -424,6 +425,7 @@ server.post('/login', async (req, res) => {
   }
 
   const userdata = results[0];
+  console.log(userdata)
 
   const correctPassword = await bcrypt.compare(password, userdata.password);
 
@@ -435,7 +437,12 @@ server.post('/login', async (req, res) => {
     return;
   }
 
-  const token = generateToken({ email });
+  const useForToken = {
+    id: userdata.id,
+    email: userdata.email
+  };
+
+  const token = generateToken(useForToken);
 
   res.status(201).json({
     success: true, 

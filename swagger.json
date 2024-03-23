@@ -25,12 +25,7 @@
     "/api/recetas": {
       "get": {
         "tags": ["Recetas"],
-        "summary": "Lista todas las recetas",
-        "responses": {
-          "200": {
-            "description": "Listado de todas las recetas"
-          }
-        }
+        "summary": "Lista todas las recetas"
       },
       "post": {
         "tags": ["Recetas"],
@@ -43,14 +38,6 @@
                 "$ref": "#/components/schemas/recetas"
               }
             }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Receta creada exitosamente"
-          },
-          "404": {
-            "description": "No se ha podido crear esta receta"
           }
         }
       }
@@ -70,12 +57,7 @@
                 "type": "integer"
               }
             }
-        ],
-        "responses": {
-          "404": {
-            "description": "No se ha encontrado esta receta"
-          }
-        }
+        ]
       },
       "put": {
         "tags": ["Recetas"],
@@ -91,15 +73,7 @@
               "type": "integer"
             }
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "Receta actualizada"
-          },
-          "404": {
-            "description": "No se ha podido actualizar esta receta"
-          }
-        }
+        ]
       },
       "delete": {
         "tags": ["Recetas"],
@@ -115,15 +89,7 @@
               "type": "integer"
             }
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "Se ha podido eliminar esta receta"
-          },
-          "404": {
-            "description": "No se ha podido eliminar esta receta"
-          }
-        }
+        ]
       }
     },
     "/registro": {
@@ -131,9 +97,14 @@
         "tags": ["Usuarias"],
         "description": "Registra una usuaria",
         "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Se ha registrado la usuaria con éxito"
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/usuarios"
+              }
+            }
           }
         }
       }
@@ -143,9 +114,14 @@
         "tags": ["Usuarias"],
         "description": "Permite que una usuaria inicie sesión",
         "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Inicio de sesión exitoso"
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/usuarios"
+              }
+            }
           }
         }
       }
@@ -174,14 +150,24 @@
           }
         }
       },
-      "usuarios_db": {
+      "usuarios": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
+          "id": {
+            "type": "integer",
+            "description": "El identificador único de usuario en la base de datos."
           },
-          "slogan": {
-            "type": "string"
+          "nombre": {
+            "type": "string",
+            "description": "Nombre de usuario."
+          },
+          "email": {
+            "type": "string",
+            "description": "Email del usuario"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña del usuario."
           }
         }
       }
