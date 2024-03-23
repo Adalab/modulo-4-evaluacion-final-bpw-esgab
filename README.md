@@ -33,8 +33,11 @@ npm install
 3. Crea un archivo **.env** en el directorio raíz y define las siguientes **variables de entorno**:
 
 ```bash
-MYSQL_LOCAL_PASS = tu_contraseña_mysql_local
-MYSQL_LOCAL_DB = tu_base_de_datos_mysql_local
+MYSQL_HOST = tu_host_mysql
+MYSQL_USER = tu_usuario_mysql
+MYSQL_PASS = tu_contraseña_mysql
+MYSQL_RECIPES_DB = nombre_de_tu_base_de_datos_de_recetas
+MYSQL_USERS_DB = nombre_de_tu_base_de_datos_de_usuarios
 ```
 4. **Inicia el servidor**:
 

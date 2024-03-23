@@ -22,26 +22,22 @@ server.use(express.json({ limit: "25mb" }));
 server.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // MYSQL CONFIGURATION
+// CONFIGURATION
+server.use(cors());
+server.use(express.json({ limit: "25mb" }));
+server.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-async function getConnection() {
+// MYSQL CONFIGURATION
+async function getConnection(database) {
+  let host, user, password;
 
-  let host, user, password, database;
-
-  if (process.env.NODE_ENV === "production") {
-    host = process.env.MYSQL_HOST;
-    user = process.env.MYSQL_USER;
-    password = process.env.MYSQL_PASS;
-    database = process.env.MYSQL_DB;
-  } else {
-    host = "localhost";
-    user = "root";
-    password = process.env.MYSQL_LOCAL_PASS;
-    database = process.env.MYSQL_LOCAL_DB;
-  }
+  host = process.env.MYSQL_HOST || "localhost";
+  user = process.env.MYSQL_USER || "root";
+  password = process.env.MYSQL_PASS;
 
   const connection = await mysql.createConnection({
     host: host,
-    database: database,
+    database: database, // Specifies which database is used
     user: user,
     password: password,
   });
@@ -51,14 +47,12 @@ async function getConnection() {
   return connection;
 }
 
-// ARRANCAR EL SERVIDOR
-
+// START THE SERVER
 server.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
 
 // JWT functions
-
 const generateToken = (payload) => {
   const token = jwt.sign(payload, "secreto", { expiresIn: "1h" });
   return token;
@@ -100,9 +94,9 @@ server.get("/", (req, res) => {
 });
 
 // get all recipes
-server.get("/api/recetas", async (req, res) => {
+server.get("/api/recetas", authenticateToken, async (req, res) => {
   try {
-    const conn = await getConnection();
+    const conn = await getConnection(process.env.MYSQL_RECIPES_DB);
 
     const sql = "SELECT * FROM recetas";
 
@@ -130,7 +124,7 @@ server.get("/api/recetas/:id", async (req, res) => {
 
     const foundRecipe = "SELECT * FROM recetas WHERE id = ?";
 
-    const conn = await getConnection();
+    const conn = await getConnection(process.env.MYSQL_RECIPES_DB);
 
     const [results] = await conn.query(foundRecipe, [recipeId]);
 
@@ -173,7 +167,7 @@ server.post("/api/recetas", async (req, res) => {
   }
 
   try {
-    const conn = await getConnection();
+    const conn = await getConnection(process.env.MYSQL_RECIPES_DB);
 
     // insert recipe data
     const insertRecipes = `
@@ -204,7 +198,7 @@ server.put("/api/recetas/:id", async (req, res) => {
   const { nombre, ingredientes, instrucciones } = req.body;
 
   try {
-    const conn = await getConnection();
+    const conn = await getConnection(process.env.MYSQL_RECIPES_DB);
 
     const updateRecipe = `
       UPDATE recetas
@@ -236,7 +230,7 @@ server.delete("/api/recetas/:id", async (req, res) => {
   const deletedId = req.params.id;
 
   try {
-    const conn = await getConnection();
+    const conn = await getConnection(process.env.MYSQL_RECIPES_DB);
 
     const deleteRecipe = `
       DELETE FROM recetas WHERE id = ?
@@ -331,7 +325,7 @@ server.post("/registro", async (req, res) => {
     });
   }
 
-  const conn = await getConnection();
+  const conn = await getConnection(process.env.MYSQL_USERS_DB);
 
   const queryCheckUserName = `
   SELECT *
@@ -397,4 +391,62 @@ server.post("/registro", async (req, res) => {
   }
 
   conn.end();
+});
+
+server.post('/login', async (req, res) => {
+  const {email, password} = req.body;
+
+  if (!email) {
+    res.status(400).json({
+      success: false,
+      error: "El email de la usuaria no puede estar vacio",
+    });
+    return;
+  }
+
+  if (!password) {
+    res.status(400).json({
+      success: false,
+      error: "La contraseña no puede estar vacía",
+    });
+    return;
+  }
+
+  const conn = await getConnection(process.env.MYSQL_USERS_DB);
+
+  const querySearchUser = `
+    SELECT * FROM usuarios
+      WHERE email = ?
+  `;
+
+  const [results] = await conn.query( querySearchUser, [email] );
+
+  conn.end();
+
+  if( results.length !== 1 ) {
+    res.status(400).json({
+      success:false, 
+      error: "Las credenciales no son válidas"});
+    return;
+  }
+
+  const userdata = results[0];
+
+  const correctPassword = await bcrypt.compare(password, userdata.password);
+
+  if( !correctPassword ) {
+    res.status(400).json({
+      success: false, 
+      error: "Las credenciales no son válidas"
+    });
+    return;
+  }
+
+  const token = generateToken({ email });
+
+  res.json({
+    success: true, 
+    token: token, 
+  });
+
 });
