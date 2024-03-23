@@ -15,10 +15,10 @@ server.use(express.json({ limit: "25mb" }));
 
 // mysql config
 
-async function getConnection() {
+async function getConnection(database) {
   const connection = await mysql.createConnection({
     host: process.env.MYSQL_HOST,
-    database: process.env.MYSQL_DB,
+    database: database,
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASS,
   });
@@ -36,11 +36,11 @@ server.listen(port, () => {
 
 // get all recipes
 server.get("/api/recetas", async (req, res) => {
-  const connection = await getConnection();
+  const conn = await getConnection(process.env.MYSQL_DB1);
 
   const sql = "SELECT * FROM recetas";
 
-  const [results] = await connection.query(sql);
+  const [results] = await conn.query(sql);
 
   const numOfElements = results.length;
 
@@ -49,7 +49,7 @@ server.get("/api/recetas", async (req, res) => {
     results: results,
   });
 
-  connection.end();
+  conn.end();
 });
 
 // get recipe by its id
@@ -58,9 +58,9 @@ server.get("/api/recetas/:id", async (req, res) => {
 
   const foundRecipe = "SELECT * FROM recetas WHERE id = ?";
 
-  const connection = await getConnection();
+  const conn = await getConnection(process.env.MYSQL_DB1);
 
-  const [results] = await connection.query(foundRecipe, [recipeId]);
+  const [results] = await conn.query(foundRecipe, [recipeId]);
 
   const recipesResults = results[0];
 
@@ -73,14 +73,20 @@ server.get("/api/recetas/:id", async (req, res) => {
     res.json(recipesResults);
   }
 
-  connection.end();
+  conn.end();
 });
 
 // add recipe
 server.post("/api/recetas", async (req, res) => {
   const { nombre, ingredientes, instrucciones } = req.body;
 
-  if ( !nombre || !ingredientes || !instrucciones || nombre === "" || ingredientes === "" || instrucciones === ""
+  if (
+    !nombre ||
+    !ingredientes ||
+    !instrucciones ||
+    nombre === "" ||
+    ingredientes === "" ||
+    instrucciones === ""
   ) {
     return res.json({
       success: false,
@@ -89,14 +95,14 @@ server.post("/api/recetas", async (req, res) => {
   }
 
   try {
-    const connection = await getConnection();
+    const conn = await getConnection(process.env.MYSQL_DB1);
 
     // insert recipe data
     const insertRecipes = `
       INSERT INTO recetas (nombre, ingredientes, instrucciones)
       VALUES (?, ?, ?)`;
 
-    const [results] = await connection.execute(insertRecipes, [
+    const [results] = await conn.execute(insertRecipes, [
       nombre,
       ingredientes,
       instrucciones,
@@ -108,7 +114,6 @@ server.post("/api/recetas", async (req, res) => {
       success: true,
       id: results.insertId,
     });
-  
   } catch (error) {
     res.json({
       success: false,
@@ -121,7 +126,7 @@ server.put("/api/recetas/:id", async (req, res) => {
   const { nombre, ingredientes, instrucciones } = req.body;
 
   try {
-    const conn = await getConnection();
+    const conn = await getConnection(process.env.MYSQL_DB1);
 
     const updateRecipe = `
       UPDATE recetas
@@ -153,7 +158,7 @@ server.delete("/api/recetas/:id", async (req, res) => {
   const deletedId = req.params.id;
 
   try {
-    const conn = await getConnection();
+    const conn = await getConnection(process.env.MYSQL_DB1);
 
     const deleteRecipe = `
       DELETE FROM recetas WHERE id = ?
@@ -171,5 +176,140 @@ server.delete("/api/recetas/:id", async (req, res) => {
       success: false,
       error: "Error al borrar la receta",
     });
+  }
+});
+
+
+// User registration: username, email and password
+server.post("/registro", async (req, res) => {
+  console.log(req.body);
+
+  if (!req.body.nombre) {
+    res.json({
+      success: false,
+      error: "El nombre de usuaria no puede estar vacio",
+    });
+    return;
+  }
+
+  if (req.body.nombre.length < 4) {
+    res.json({
+      success: false,
+      error: "El nombre de usuaria es demasiado corto",
+    });
+    return;
+  }
+
+  if (req.body.nombre.includes(" ")) {
+    res.json({
+      success: false,
+      error: "El nombre de usuaria no puede contener espacios",
+    });
+    return;
+  }
+
+  if (!req.body.email) {
+    res.json({
+      success: false,
+      error: "El email de la usuaria no puede estar vacio",
+    });
+    return;
+  }
+
+  if (!/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(req.body.email)) {
+    res.json({
+      success: false,
+      error: "El email no es válido",
+    });
+    return;
+  }
+
+  if (!req.body.password) {
+    res.json({
+      success: false,
+      error: "La contraseña no puede estar vacia",
+    });
+    return;
+  }
+
+  if (req.body.password.length < 8) {
+    res.json({
+      success: false,
+      error: "La contraseña debe tener como mínimo 8 caracteres",
+    });
+    return;
+  }
+
+  //  Check if the password contains at least one letter, one number, and one symbol
+  if (
+    !/(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+|}{:;.,<>?]).{8,}/.test(
+      req.body.password
+    )
+  ) {
+    return res.json({
+      success: false,
+      error:
+        "La contraseña debe contener al menos una letra, un número y un símbolo",
+    });
+  }
+
+  const conn = await getConnection(process.env.MYSQL_DB2);
+
+  const queryCheckUserName = `
+  SELECT *
+    FROM usuarios
+    WHERE nombre = ?
+  `;
+
+  const [existingUserNames] = await conn.query(queryCheckUserName, [
+    req.body.nombre,
+  ]);
+
+  if (existingUserNames.length > 0) {
+    res.json({
+      success: false,
+      error: "Ese nombre de usuario ya existe",
+    });
+    conn.end();
+    return;
+  }
+
+  // Check if the email already exists
+  const queryCheckEmail = `
+  SELECT * FROM usuarios
+  WHERE email = ?;
+  `;
+
+  const [existingEmails] = await conn.query(queryCheckEmail, [req.body.email]);
+
+  if (existingEmails.length > 0) {
+    // If a user with the given email exists, return an error
+    res.json({
+      success: false,
+      error: "La dirección de correo electrónico ya está registrada",
+    });
+    conn.end();
+    return;
+  }
+
+  const insertNewUser = `
+  INSERT INTO usuarios (nombre, email, password)
+    VALUES (?, ?, ?);
+  `;
+
+  // const crypedPass = await bcrypt.hash(req.body.pass, 10);
+
+  const [insertResults] = await conn.execute(insertNewUser, [
+    req.body.nombre,
+    req.body.email,
+    req.body.password,
+  ]);
+
+  conn.end();
+
+  if (insertResults.affectedRows === 1) {
+    res.send({ success: true });
+  } else {
+    res.send({ success: false });
   }
 });
