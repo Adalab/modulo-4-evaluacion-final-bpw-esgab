@@ -13,3 +13,6 @@ CREATE TABLE `usuarios_db`.`usuarios` (
 `password` VARCHAR(45) NOT NULL,
 PRIMARY KEY (`id`),
 UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE);
+
+ALTER TABLE `usuarios_db`.`usuarios` 
+CHANGE COLUMN `password` `password` VARCHAR(500) NOT NULL ;

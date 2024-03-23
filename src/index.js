@@ -4,6 +4,8 @@
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 
@@ -27,6 +29,43 @@ async function getConnection(database) {
 
   return connection;
 }
+
+// JWT functions
+
+const generateToken = (payload) => {
+  const token = jwt.sign(payload, "secreto", { expiresIn: "1h" });
+  return token;
+};
+
+const verifyToken = (token) => {
+  try {
+    const decoded = jwt.verify(token, "secreto");
+    return decoded;
+  } catch (err) {
+    return null;
+  }
+};
+
+const authenticateToken = (req, res, next) => {
+  const token = req.headers["authorization"];
+
+  if (!token) {
+    return res.status(401).json({
+      error: "Token no proporcionado",
+    });
+  }
+
+  const decoded = verifyToken(token);
+
+  if (!decoded) {
+    return res.status(401).json({
+      error: "Token inválido",
+    });
+  }
+
+  req.user = decoded;
+  next();
+};
 
 // init express aplication
 const port = 4000;
@@ -179,12 +218,12 @@ server.delete("/api/recetas/:id", async (req, res) => {
   }
 });
 
-
 // User registration: username, email and password
 server.post("/registro", async (req, res) => {
+  const { nombre, email, password } = req.body;
   console.log(req.body);
 
-  if (!req.body.nombre) {
+  if (!nombre) {
     res.json({
       success: false,
       error: "El nombre de usuaria no puede estar vacio",
@@ -192,7 +231,7 @@ server.post("/registro", async (req, res) => {
     return;
   }
 
-  if (req.body.nombre.length < 4) {
+  if (nombre.length < 4) {
     res.json({
       success: false,
       error: "El nombre de usuaria es demasiado corto",
@@ -200,7 +239,7 @@ server.post("/registro", async (req, res) => {
     return;
   }
 
-  if (req.body.nombre.includes(" ")) {
+  if (nombre.includes(" ")) {
     res.json({
       success: false,
       error: "El nombre de usuaria no puede contener espacios",
@@ -208,7 +247,7 @@ server.post("/registro", async (req, res) => {
     return;
   }
 
-  if (!req.body.email) {
+  if (!email) {
     res.json({
       success: false,
       error: "El email de la usuaria no puede estar vacio",
@@ -216,7 +255,7 @@ server.post("/registro", async (req, res) => {
     return;
   }
 
-  if (!/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(req.body.email)) {
+  if (!/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(email)) {
     res.json({
       success: false,
       error: "El email no es válido",
@@ -224,7 +263,7 @@ server.post("/registro", async (req, res) => {
     return;
   }
 
-  if (!req.body.password) {
+  if (!password) {
     res.json({
       success: false,
       error: "La contraseña no puede estar vacia",
@@ -232,7 +271,7 @@ server.post("/registro", async (req, res) => {
     return;
   }
 
-  if (req.body.password.length < 8) {
+  if (password.length < 8) {
     res.json({
       success: false,
       error: "La contraseña debe tener como mínimo 8 caracteres",
@@ -243,7 +282,7 @@ server.post("/registro", async (req, res) => {
   //  Check if the password contains at least one letter, one number, and one symbol
   if (
     !/(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+|}{:;.,<>?]).{8,}/.test(
-      req.body.password
+      password
     )
   ) {
     return res.json({
@@ -261,9 +300,7 @@ server.post("/registro", async (req, res) => {
     WHERE nombre = ?
   `;
 
-  const [existingUserNames] = await conn.query(queryCheckUserName, [
-    req.body.nombre,
-  ]);
+  const [existingUserNames] = await conn.query(queryCheckUserName, [nombre]);
 
   if (existingUserNames.length > 0) {
     res.json({
@@ -280,7 +317,7 @@ server.post("/registro", async (req, res) => {
   WHERE email = ?;
   `;
 
-  const [existingEmails] = await conn.query(queryCheckEmail, [req.body.email]);
+  const [existingEmails] = await conn.query(queryCheckEmail, [email]);
 
   if (existingEmails.length > 0) {
     // If a user with the given email exists, return an error
@@ -297,19 +334,30 @@ server.post("/registro", async (req, res) => {
     VALUES (?, ?, ?);
   `;
 
-  // const crypedPass = await bcrypt.hash(req.body.pass, 10);
+  const crypedPass = await bcrypt.hash(password, 10);
 
   const [insertResults] = await conn.execute(insertNewUser, [
-    req.body.nombre,
-    req.body.email,
-    req.body.password,
+    nombre,
+    email,
+    crypedPass,
   ]);
+
+  if (insertResults.affectedRows === 1) {
+    // Generate a token for the user
+    const token = generateToken({ email });
+
+    res.json({
+      success: true,
+      token: token,
+    });
+
+  } else {
+    res.json({ 
+      success: false,
+      error: "Error en el registro de usuario"
+    });
+  }
 
   conn.end();
 
-  if (insertResults.affectedRows === 1) {
-    res.send({ success: true });
-  } else {
-    res.send({ success: false });
-  }
 });
